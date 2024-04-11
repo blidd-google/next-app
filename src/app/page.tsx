@@ -1,7 +1,8 @@
 import Image from "next/image";
 import styles from "./page.module.css";
 
-export default function Home({ secret }: { secret: string }) {
+export default function Home() {
+  const secret = process.env.MY_SECRET;
   return (
     <main className={styles.main}>
       <h1>My secret: {secret}. OOPS</h1>
@@ -93,14 +94,4 @@ export default function Home({ secret }: { secret: string }) {
       </div>
     </main>
   );
-}
-
-export async function getServerSideProps(): Promise<{
-  props: { secret: string };
-}> {
-  return {
-    props: {
-      secret: process.env.MY_SECRET || "empty",
-    },
-  };
 }
