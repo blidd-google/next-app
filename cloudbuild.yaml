@@ -1,0 +1,45 @@
+steps:
+  - name: "ubuntu"
+    entrypoint: "bash"
+    args: ["-c", "chmod -R ugo+rw /output_bundle /workspace /env"]
+    volumes:
+      - name: "output_bundle"
+        path: "/output_bundle"
+      - name: "env"
+        path: "/env"
+  - id: build-from-source
+    name: gcr.io/k8s-skaffold/pack
+    entrypoint: pack
+    args:
+      - build
+      - us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/next-app:latest
+      - --builder
+      - us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/builder:local
+      - --volume
+      - output_bundle:/output_bundle:rw
+      - --cache-image
+      - us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/next-app-cache-image:latest
+      - --publish
+      - --trust-builder
+      - --env
+      - "FIREBASE_OUTPUT_BUNDLE_DIR=/output_bundle"
+    volumes:
+      - name: "output_bundle"
+        path: "/output_bundle"
+      - name: "env"
+        path: "/env"
+  - id: finalize-build
+    name: us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/builder:local
+    entrypoint: /bin/bash
+    args:
+      - -c
+      - "/bin/publisher --apphostingyaml_filepath /workspace/apphosting.yaml --output_bundle_dir /output_bundle --env_filepath /env/vars_with_secret_values --output_filepath $$BUILDER_OUTPUT/output"
+    volumes:
+      - name: "output_bundle"
+        path: "/output_bundle"
+      - name: "env"
+        path: "/env"
+
+images:
+  - us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/next-app:latest
+  - us-central1-docker.pkg.dev/blidd-experiments/firebaseapphosting-experiments/next-app-cache-image:latest
